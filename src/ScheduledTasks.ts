@@ -3,8 +3,8 @@ import * as uuid from 'uuid';
 
 interface IOptions {
 	queueId: string,
-	client: redis.RedisClientType;
-	callback: (data: any, id: string, due: Date) => void;
+	redisClient: redis.RedisClientType<any, any, any>;
+	callback: (data: any, id: string) => void;
 	pollInterval: number;
 }
 
@@ -24,8 +24,8 @@ class ScheduledTasks {
 
 	queueId: string = null;
 	pollInterval: number = 1000;
-	client: redis.RedisClientType = null;
-	callback: (data: any, id: string, due: Date) => void = null;
+	redisClient: redis.RedisClientType<any, any, any> = null;
+	callback: (data: any, id: string) => void = null;
 	pollIntervalId: NodeJS.Timeout = null;
 
 	constructor(options: IOptions) {
@@ -40,8 +40,8 @@ class ScheduledTasks {
 			throw new TypeError('Invalid queue ID specified');
 		}
 
-		if (options.client != null) {
-			this.client = options.client;
+		if (options.redisClient != null) {
+			this.redisClient = options.redisClient;
 		} else {
 			throw new TypeError('Invalid redis connection options');
 		}
@@ -82,19 +82,19 @@ class ScheduledTasks {
 		let tasks: string[] = null;
 		do {
 			try {
-				await this.client.watch(this.queueId);
-				tasks = await this.client.zRangeByScore(this.queueId, 0, now, { LIMIT: { count: 1, offset: 0 } });
+				await this.redisClient.watch(this.queueId);
+				tasks = await this.redisClient.zRangeByScore(this.queueId, 0, now, { LIMIT: { count: 1, offset: 0 } });
 
 				if (tasks.length > 0) {
 					let task = tasks[0];
-					let results = await this.client.multi()
+					let results = await this.redisClient.multi()
 						.zRem(this.queueId, task)
 						.exec();
 
 					if (results && results[0] !== null) {
 						// Process tasks
 						let item: Item = JSON.parse(task);
-						this.callback(item.data, item.id, new Date(item.scheduledAt));
+						this.callback(item.data, item.id);
 					}
 				}
 			} catch (err) {
@@ -108,7 +108,7 @@ class ScheduledTasks {
 	 */
 	private async addToRedis(task: Item) {
 		let value = JSON.stringify(task)
-		await this.client.zAdd(this.queueId, { score: task.scheduledAt, value });
+		await this.redisClient.zAdd(this.queueId, { score: task.scheduledAt, value });
 	}
 
 	/**

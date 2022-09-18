@@ -5,7 +5,7 @@ interface IOptions {
 	queueId: string,
 	redisClient: redis.RedisClientType<any, any, any>;
 	callback: (data: any, id: string) => void;
-	pollInterval: number;
+	pollInterval?: number;
 }
 
 class Item {

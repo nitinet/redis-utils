@@ -5,3 +5,8 @@ export default {
 	ScheduledWorker,
 	QueueWorker
 };
+
+export {
+	ScheduledWorker,
+	QueueWorker
+};

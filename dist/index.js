@@ -4,4 +4,5 @@ export default {
     ScheduledWorker,
     QueueWorker
 };
+export { ScheduledWorker, QueueWorker };
 //# sourceMappingURL=index.js.map

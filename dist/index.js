@@ -1,5 +1,7 @@
-import ScheduledTasks from './ScheduledTasks.js';
+import ScheduledWorker from './ScheduledWorker.js';
+import QueueWorker from './QueueWorker.js';
 export default {
-    ScheduledTasks
+    ScheduledWorker,
+    QueueWorker
 };
 //# sourceMappingURL=index.js.map

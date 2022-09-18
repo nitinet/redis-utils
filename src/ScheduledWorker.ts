@@ -20,7 +20,7 @@ class Item {
 	}
 }
 
-class ScheduledTasks {
+class ScheduledWorker {
 
 	queueId: string = null;
 	pollInterval: number = 1000;
@@ -173,4 +173,4 @@ class ScheduledTasks {
 
 }
 
-export default ScheduledTasks;
+export default ScheduledWorker;

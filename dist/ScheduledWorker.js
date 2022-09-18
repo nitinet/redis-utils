@@ -6,7 +6,7 @@ class Item {
         this.data = data;
     }
 }
-class ScheduledTasks {
+class ScheduledWorker {
     constructor(options) {
         this.queueId = null;
         this.pollInterval = 1000;
@@ -104,5 +104,5 @@ class ScheduledTasks {
         return taskIds;
     }
 }
-export default ScheduledTasks;
-//# sourceMappingURL=ScheduledTasks.js.map
+export default ScheduledWorker;
+//# sourceMappingURL=ScheduledWorker.js.map

@@ -38,7 +38,6 @@ class QueueWorker {
         this.pollIntervalId = null;
     }
     async poll() {
-        const now = new Date().getTime();
         let task = null;
         do {
             try {

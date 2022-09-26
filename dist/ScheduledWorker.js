@@ -1,4 +1,3 @@
-import * as uuid from 'uuid';
 class Item {
     constructor(id, scheduledAt, data) {
         this.id = id;
@@ -68,16 +67,13 @@ class ScheduledWorker {
             }
         } while (tasks != null && tasks.length > 0);
     }
-    async addToRedis(task) {
-        let value = JSON.stringify(task);
-        await this.redisClient.zAdd(this.queueId, { score: task.scheduledAt, value });
+    async addToRedis(data, scheduledAt) {
+        let value = JSON.stringify(data);
+        await this.redisClient.zAdd(this.queueId, { score: scheduledAt, value });
     }
     async add(...datas) {
         return Promise.all(datas.map(async (data) => {
-            const taskId = uuid.v4();
-            let task = new Item(uuid.v4(), 0, data);
-            await this.addToRedis(task);
-            return taskId;
+            await this.addToRedis(data, 0);
         }));
     }
     addDelayed(delayMs, ...data) {
@@ -96,10 +92,7 @@ class ScheduledWorker {
         }
         const scheduledAt = at.getTime();
         let taskIds = await Promise.all(datas.map(async (data) => {
-            const taskId = uuid.v4();
-            let task = new Item(uuid.v4(), scheduledAt, data);
-            await this.addToRedis(task);
-            return taskId;
+            await this.addToRedis(data, scheduledAt);
         }));
         return taskIds;
     }

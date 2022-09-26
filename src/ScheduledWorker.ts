@@ -1,5 +1,4 @@
 import * as  redis from 'redis';
-import * as uuid from 'uuid';
 
 interface IOptions {
 	queueId: string,
@@ -106,9 +105,9 @@ class ScheduledWorker {
 	/**
 	 * Adds a task to redis.
 	 */
-	private async addToRedis(task: Item) {
-		let value = JSON.stringify(task)
-		await this.redisClient.zAdd(this.queueId, { score: task.scheduledAt, value });
+	private async addToRedis(data: any, scheduledAt: number) {
+		let value = JSON.stringify(data)
+		await this.redisClient.zAdd(this.queueId, { score: scheduledAt, value });
 	}
 
 	/**
@@ -117,12 +116,7 @@ class ScheduledWorker {
  */
 	async add(...datas: any[]) {
 		return Promise.all(datas.map(async data => {
-			// Create unique task ID
-			const taskId = uuid.v4();
-
-			let task = new Item(uuid.v4(), 0, data);
-			await this.addToRedis(task);
-			return taskId;
+			await this.addToRedis(data, 0);
 		}));
 	}
 
@@ -160,12 +154,7 @@ class ScheduledWorker {
 		const scheduledAt = at.getTime();
 
 		let taskIds = await Promise.all(datas.map(async data => {
-			// Create unique task ID
-			const taskId = uuid.v4();
-
-			let task = new Item(uuid.v4(), scheduledAt, data);
-			await this.addToRedis(task);
-			return taskId;
+			await this.addToRedis(data, scheduledAt);
 		}));
 
 		return taskIds;

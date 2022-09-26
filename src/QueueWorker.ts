@@ -1,5 +1,4 @@
 import * as  redis from 'redis';
-import * as uuid from 'uuid';
 
 interface IOptions {
 	queueId: string,
@@ -66,7 +65,6 @@ class QueueWorker {
 	 * Polls redis for tasks.
 	 */
 	private async poll() {
-		const now = new Date().getTime();
 		let task: string = null;
 		do {
 			try {

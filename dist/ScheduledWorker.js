@@ -1,10 +1,3 @@
-class Item {
-    constructor(id, scheduledAt, data) {
-        this.id = id;
-        this.scheduledAt = scheduledAt;
-        this.data = data;
-    }
-}
 class ScheduledWorker {
     constructor(options) {
         this.queueId = null;
@@ -57,8 +50,8 @@ class ScheduledWorker {
                         .zRem(this.queueId, task)
                         .exec();
                     if (results && results[0] !== null) {
-                        let item = JSON.parse(task);
-                        this.callback(item.data, item.id);
+                        let data = JSON.parse(task);
+                        this.callback(data);
                     }
                 }
             }

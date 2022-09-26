@@ -3,20 +3,8 @@ import * as  redis from 'redis';
 interface IOptions {
 	queueId: string,
 	redisClient: redis.RedisClientType<any, any, any>;
-	callback: (data: any, id: string) => void;
+	callback: (data: any) => void;
 	pollInterval?: number;
-}
-
-class Item {
-	id: string;
-	scheduledAt: number;
-	data: any;
-
-	constructor(id: string, scheduledAt: number, data: any) {
-		this.id = id;
-		this.scheduledAt = scheduledAt;
-		this.data = data;
-	}
 }
 
 class ScheduledWorker {
@@ -24,7 +12,7 @@ class ScheduledWorker {
 	queueId: string = null;
 	pollInterval: number = 1000;
 	redisClient: redis.RedisClientType<any, any, any> = null;
-	callback: (data: any, id: string) => void = null;
+	callback: (data: any) => void = null;
 	pollIntervalId: NodeJS.Timeout = null;
 
 	constructor(options: IOptions) {
@@ -92,8 +80,8 @@ class ScheduledWorker {
 
 					if (results && results[0] !== null) {
 						// Process tasks
-						let item: Item = JSON.parse(task);
-						this.callback(item.data, item.id);
+						let data: any = JSON.parse(task);
+						this.callback(data);
 					}
 				}
 			} catch (err) {

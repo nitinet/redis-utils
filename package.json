@@ -2,6 +2,7 @@
 	"name": "redis-utils",
 	"version": "1.0.0",
 	"description": "",
+	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./src/index.ts",
 	"scripts": {

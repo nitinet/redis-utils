@@ -1,9 +1,11 @@
 import * as  redis from 'redis';
 
+import * as types from './types.js';
+
 interface IOptions {
 	queueId: string,
 	redisClient: redis.RedisClientType<any, any, any>;
-	callback: (data: any) => void;
+	callback: types.CallbackType;
 	pollInterval?: number;
 }
 
@@ -12,7 +14,7 @@ class QueueWorker {
 	queueId: string = null;
 	pollInterval: number = 1000;
 	redisClient: redis.RedisClientType<any, any, any> = null;
-	callback: (data: any) => void = null;
+	callback: types.CallbackType = null;
 	pollIntervalId: NodeJS.Timeout = null;
 
 	constructor(options: IOptions) {
@@ -65,29 +67,27 @@ class QueueWorker {
 	 * Polls redis for tasks.
 	 */
 	private async poll() {
-		let task: string = null;
+		let item: string = null;
 		do {
 			try {
-				task = await this.redisClient.lPop(this.queueId);
+				item = await this.redisClient.lPop(this.queueId);
 
-				if (task != null) {
+				if (item != null) {
 					// Process tasks
-					let item = JSON.parse(task);
-					this.callback(item);
+					await this.callback(item);
 				}
 			} catch (err) {
 				throw TypeError('Invalid redis Operation');
 			}
-		} while (task != null);
+		} while (item != null);
 	}
 
 	/**
 	* Add a scheduled task
-	* @param  {any[]} datas data to be scheduled
+	* @param  {string[]} datas data to be scheduled
 	*/
-	async add(...datas: any[]) {
-		return Promise.all(datas.map(async data => {
-			let value = JSON.stringify(data);
+	async add(...datas: string[]) {
+		return Promise.all(datas.map(async value => {
 			await this.redisClient.rPush(this.queueId, value);
 		}));
 	}

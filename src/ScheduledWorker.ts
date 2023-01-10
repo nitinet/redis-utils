@@ -1,9 +1,11 @@
 import * as  redis from 'redis';
 
+import * as types from './types.js';
+
 interface IOptions {
 	queueId: string,
 	redisClient: redis.RedisClientType<any, any, any>;
-	callback: (data: any) => void;
+	callback: types.CallbackType;
 	pollInterval?: number;
 }
 
@@ -12,7 +14,7 @@ class ScheduledWorker {
 	queueId: string = null;
 	pollInterval: number = 1000;
 	redisClient: redis.RedisClientType<any, any, any> = null;
-	callback: (data: any) => void = null;
+	callback: types.CallbackType = null;
 	pollIntervalId: NodeJS.Timeout = null;
 
 	constructor(options: IOptions) {
@@ -66,43 +68,45 @@ class ScheduledWorker {
 	 */
 	private async poll() {
 		const now = new Date().getTime();
-		let tasks: string[] = null;
+		let flag = false;
 		do {
+			flag = false;
 			try {
 				await this.redisClient.watch(this.queueId);
-				tasks = await this.redisClient.zRangeByScore(this.queueId, 0, now, { LIMIT: { count: 1, offset: 0 } });
+				let datas = await this.redisClient.zRangeByScore(this.queueId, 0, now, { LIMIT: { count: 1, offset: 0 } });
 
-				if (tasks.length > 0) {
-					let task = tasks[0];
+				if (datas.length > 0) {
+					let data = datas.shift();
 					let results = await this.redisClient.multi()
-						.zRem(this.queueId, task)
+						.zRem(this.queueId, data)
 						.exec();
 
-					if (results && results[0] !== null) {
+					if (results && results.length && results[0] == 1) {
 						// Process tasks
-						let data: any = JSON.parse(task);
-						this.callback(data);
+						flag = true;
+						await this.callback(data);
 					}
 				}
 			} catch (err) {
-				throw TypeError('Invalid redis Operation');
+				if ((err instanceof redis.WatchError) == false) {
+					throw err;
+				}
 			}
-		} while (tasks != null && tasks.length > 0)
+		} while (flag)
 	}
 
 	/**
 	 * Adds a task to redis.
 	 */
-	private async addToRedis(data: any, scheduledAt: number) {
-		let value = JSON.stringify(data)
+	private async addToRedis(value: string, scheduledAt: number) {
 		await this.redisClient.zAdd(this.queueId, { score: scheduledAt, value });
 	}
 
 	/**
  * Add a scheduled task
- * @param  {any[]} datas data to be scheduled
+ * @param  {string[]} datas data to be scheduled
  */
-	async add(...datas: any[]) {
+	async add(...datas: string[]) {
 		return Promise.all(datas.map(async data => {
 			await this.addToRedis(data, 0);
 		}));
@@ -111,9 +115,9 @@ class ScheduledWorker {
 	/**
 	 * Add a scheduled task
 	 * @param  {number} delayMs delay time in milli sec
-	 * @param  {any[]} data data to be scheduled
+	 * @param  {string[]} data data to be scheduled
 	 */
-	addDelayed(delayMs: number, ...data: any[]) {
+	addDelayed(delayMs: number, ...data: string[]) {
 		// Validate `delayMs`
 		if (delayMs && delayMs <= 0) {
 			throw new TypeError('`delayMs` must be a positive integer');
@@ -128,9 +132,9 @@ class ScheduledWorker {
 	/**
 	 * Adds multiple tasks at scheduled time
 	 * @param  {Date} at scheduled time
-	 * @param  {any[]} datas array of data
+	 * @param  {string[]} datas array of data
 	 */
-	async addAt(at: Date, ...datas: any[]) {
+	async addAt(at: Date, ...datas: string[]) {
 		// Validate `at`
 		if (!(at && at instanceof Date)) {
 			throw new TypeError('`at` must be a valid date');

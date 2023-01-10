@@ -1,10 +1,11 @@
+import * as redis from 'redis';
 class ScheduledWorker {
+    queueId = null;
+    pollInterval = 1000;
+    redisClient = null;
+    callback = null;
+    pollIntervalId = null;
     constructor(options) {
-        this.queueId = null;
-        this.pollInterval = 1000;
-        this.redisClient = null;
-        this.callback = null;
-        this.pollIntervalId = null;
         if (typeof options !== 'object') {
             throw new TypeError('No constructor settings specified');
         }
@@ -39,29 +40,31 @@ class ScheduledWorker {
     }
     async poll() {
         const now = new Date().getTime();
-        let tasks = null;
+        let flag = false;
         do {
+            flag = false;
             try {
                 await this.redisClient.watch(this.queueId);
-                tasks = await this.redisClient.zRangeByScore(this.queueId, 0, now, { LIMIT: { count: 1, offset: 0 } });
-                if (tasks.length > 0) {
-                    let task = tasks[0];
+                let datas = await this.redisClient.zRangeByScore(this.queueId, 0, now, { LIMIT: { count: 1, offset: 0 } });
+                if (datas.length > 0) {
+                    let data = datas.shift();
                     let results = await this.redisClient.multi()
-                        .zRem(this.queueId, task)
+                        .zRem(this.queueId, data)
                         .exec();
-                    if (results && results[0] !== null) {
-                        let data = JSON.parse(task);
-                        this.callback(data);
+                    if (results && results.length && results[0] == 1) {
+                        flag = true;
+                        await this.callback(data);
                     }
                 }
             }
             catch (err) {
-                throw TypeError('Invalid redis Operation');
+                if ((err instanceof redis.WatchError) == false) {
+                    throw err;
+                }
             }
-        } while (tasks != null && tasks.length > 0);
+        } while (flag);
     }
-    async addToRedis(data, scheduledAt) {
-        let value = JSON.stringify(data);
+    async addToRedis(value, scheduledAt) {
         await this.redisClient.zAdd(this.queueId, { score: scheduledAt, value });
     }
     async add(...datas) {

@@ -1,10 +1,10 @@
 class QueueWorker {
+    queueId = null;
+    pollInterval = 1000;
+    redisClient = null;
+    callback = null;
+    pollIntervalId = null;
     constructor(options) {
-        this.queueId = null;
-        this.pollInterval = 1000;
-        this.redisClient = null;
-        this.callback = null;
-        this.pollIntervalId = null;
         if (typeof options !== 'object') {
             throw new TypeError('No constructor settings specified');
         }
@@ -38,23 +38,21 @@ class QueueWorker {
         this.pollIntervalId = null;
     }
     async poll() {
-        let task = null;
+        let item = null;
         do {
             try {
-                task = await this.redisClient.lPop(this.queueId);
-                if (task != null) {
-                    let item = JSON.parse(task);
-                    this.callback(item);
+                item = await this.redisClient.lPop(this.queueId);
+                if (item != null) {
+                    await this.callback(item);
                 }
             }
             catch (err) {
                 throw TypeError('Invalid redis Operation');
             }
-        } while (task != null);
+        } while (item != null);
     }
     async add(...datas) {
-        return Promise.all(datas.map(async (data) => {
-            let value = JSON.stringify(data);
+        return Promise.all(datas.map(async (value) => {
             await this.redisClient.rPush(this.queueId, value);
         }));
     }

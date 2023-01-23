@@ -1,8 +1,8 @@
 class QueueWorker {
-    queueId = null;
+    queueId;
     pollInterval = 1000;
-    redisClient = null;
-    callback = null;
+    redisClient;
+    callback;
     pollIntervalId = null;
     constructor(options) {
         if (typeof options !== 'object') {
@@ -34,8 +34,10 @@ class QueueWorker {
         this.pollIntervalId = setInterval(this.poll.bind(this), this.pollInterval);
     }
     stop() {
-        clearInterval(this.pollIntervalId);
-        this.pollIntervalId = null;
+        if (this.pollIntervalId) {
+            clearInterval(this.pollIntervalId);
+            this.pollIntervalId = null;
+        }
     }
     async poll() {
         let item = null;

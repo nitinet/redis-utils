@@ -10,12 +10,11 @@ interface IOptions {
 }
 
 class ScheduledWorker {
-
-	queueId: string = null;
+	queueId: string;
 	pollInterval: number = 1000;
-	redisClient: redis.RedisClientType<any, any, any> = null;
-	callback: types.CallbackType = null;
-	pollIntervalId: NodeJS.Timeout = null;
+	redisClient: redis.RedisClientType<any, any, any>;
+	callback: types.CallbackType;
+	pollIntervalId: NodeJS.Timeout | null = null;
 
 	constructor(options: IOptions) {
 		if (typeof options !== 'object') {
@@ -59,8 +58,10 @@ class ScheduledWorker {
 	 * Stops polling.
 	 */
 	stop() {
-		clearInterval(this.pollIntervalId);
-		this.pollIntervalId = null;
+		if (this.pollIntervalId) {
+			clearInterval(this.pollIntervalId);
+			this.pollIntervalId = null;
+		}
 	}
 
 	/**
@@ -77,6 +78,8 @@ class ScheduledWorker {
 
 				if (datas.length > 0) {
 					let data = datas.shift();
+					if (!data) break;
+
 					let results = await this.redisClient.multi()
 						.zRem(this.queueId, data)
 						.exec();
@@ -88,7 +91,7 @@ class ScheduledWorker {
 					}
 				}
 			} catch (err) {
-				if ((err instanceof redis.WatchError) == false) {
+				if (!(err instanceof redis.WatchError)) {
 					throw err;
 				}
 			}

@@ -10,12 +10,11 @@ interface IOptions {
 }
 
 class QueueWorker {
-
-	queueId: string = null;
+	queueId: string;
 	pollInterval: number = 1000;
-	redisClient: redis.RedisClientType<any, any, any> = null;
-	callback: types.CallbackType = null;
-	pollIntervalId: NodeJS.Timeout = null;
+	redisClient: redis.RedisClientType<any, any, any>;
+	callback: types.CallbackType;
+	pollIntervalId: NodeJS.Timeout | null = null;
 
 	constructor(options: IOptions) {
 		if (typeof options !== 'object') {
@@ -59,15 +58,17 @@ class QueueWorker {
 	 * Stops polling.
 	 */
 	stop() {
-		clearInterval(this.pollIntervalId);
-		this.pollIntervalId = null;
+		if (this.pollIntervalId) {
+			clearInterval(this.pollIntervalId);
+			this.pollIntervalId = null;
+		}
 	}
 
 	/**
 	 * Polls redis for tasks.
 	 */
 	private async poll() {
-		let item: string = null;
+		let item: string | null = null;
 		do {
 			try {
 				item = await this.redisClient.lPop(this.queueId);

@@ -1,9 +1,9 @@
 import * as redis from 'redis';
 class ScheduledWorker {
-    queueId = null;
+    queueId;
     pollInterval = 1000;
-    redisClient = null;
-    callback = null;
+    redisClient;
+    callback;
     pollIntervalId = null;
     constructor(options) {
         if (typeof options !== 'object') {
@@ -35,8 +35,10 @@ class ScheduledWorker {
         this.pollIntervalId = setInterval(this.poll.bind(this), this.pollInterval);
     }
     stop() {
-        clearInterval(this.pollIntervalId);
-        this.pollIntervalId = null;
+        if (this.pollIntervalId) {
+            clearInterval(this.pollIntervalId);
+            this.pollIntervalId = null;
+        }
     }
     async poll() {
         const now = new Date().getTime();
@@ -48,6 +50,8 @@ class ScheduledWorker {
                 let datas = await this.redisClient.zRangeByScore(this.queueId, 0, now, { LIMIT: { count: 1, offset: 0 } });
                 if (datas.length > 0) {
                     let data = datas.shift();
+                    if (!data)
+                        break;
                     let results = await this.redisClient.multi()
                         .zRem(this.queueId, data)
                         .exec();
@@ -58,7 +62,7 @@ class ScheduledWorker {
                 }
             }
             catch (err) {
-                if ((err instanceof redis.WatchError) == false) {
+                if (!(err instanceof redis.WatchError)) {
                     throw err;
                 }
             }

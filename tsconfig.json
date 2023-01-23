@@ -10,7 +10,6 @@
 		"incremental": true,
 		"resolveJsonModule": true,
 		"strict": true,
-		"strictNullChecks": false,
 		"outDir": "./dist"
 	},
 	"include": [

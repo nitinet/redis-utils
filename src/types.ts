@@ -1,4 +1,4 @@
-type CallbackType = (data: string) => Promise<void>;;
+type CallbackType = (data: string) => Promise<void>;
 
 export {
 	CallbackType

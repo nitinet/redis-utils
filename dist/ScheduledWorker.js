@@ -5,6 +5,7 @@ class ScheduledWorker {
     redisClient;
     callback;
     pollIntervalId = null;
+    running = false;
     constructor(options) {
         if (typeof options !== 'object') {
             throw new TypeError('No constructor settings specified');
@@ -41,6 +42,9 @@ class ScheduledWorker {
         }
     }
     async poll() {
+        if (this.running)
+            return;
+        this.running = true;
         const now = new Date().getTime();
         let flag = false;
         do {
@@ -55,7 +59,7 @@ class ScheduledWorker {
                     let results = await this.redisClient.multi()
                         .zRem(this.queueId, data)
                         .exec();
-                    if (results && results.length && results[0] == 1) {
+                    if (results?.length && results[0] == 1) {
                         flag = true;
                         await this.callback(data);
                     }
@@ -67,6 +71,7 @@ class ScheduledWorker {
                 }
             }
         } while (flag);
+        this.running = false;
     }
     async addToRedis(value, scheduledAt) {
         await this.redisClient.zAdd(this.queueId, { score: scheduledAt, value });

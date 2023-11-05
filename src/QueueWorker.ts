@@ -16,6 +16,8 @@ class QueueWorker {
 	callback: types.CallbackType;
 	pollIntervalId: NodeJS.Timeout | null = null;
 
+	private running: boolean = false;
+
 	constructor(options: IOptions) {
 		if (typeof options !== 'object') {
 			throw new TypeError('No constructor settings specified');
@@ -68,6 +70,9 @@ class QueueWorker {
 	 * Polls redis for tasks.
 	 */
 	private async poll() {
+		if (this.running) return;
+
+		this.running = true;
 		let item: string | null = null;
 		do {
 			try {
@@ -81,6 +86,7 @@ class QueueWorker {
 				throw TypeError('Invalid redis Operation');
 			}
 		} while (item != null);
+		this.running = false;
 	}
 
 	/**

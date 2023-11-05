@@ -16,6 +16,8 @@ class ScheduledWorker {
 	callback: types.CallbackType;
 	pollIntervalId: NodeJS.Timeout | null = null;
 
+	running: boolean = false;
+
 	constructor(options: IOptions) {
 		if (typeof options !== 'object') {
 			throw new TypeError('No constructor settings specified');
@@ -68,6 +70,9 @@ class ScheduledWorker {
 	 * Polls redis for tasks.
 	 */
 	private async poll() {
+		if (this.running) return;
+
+		this.running = true;
 		const now = new Date().getTime();
 		let flag = false;
 		do {
@@ -84,7 +89,7 @@ class ScheduledWorker {
 						.zRem(this.queueId, data)
 						.exec();
 
-					if (results && results.length && results[0] == 1) {
+					if (results?.length && results[0] == 1) {
 						// Process tasks
 						flag = true;
 						await this.callback(data);
@@ -95,7 +100,8 @@ class ScheduledWorker {
 					throw err;
 				}
 			}
-		} while (flag)
+		} while (flag);
+		this.running = false;
 	}
 
 	/**

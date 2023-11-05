@@ -4,6 +4,7 @@ class QueueWorker {
     redisClient;
     callback;
     pollIntervalId = null;
+    running = false;
     constructor(options) {
         if (typeof options !== 'object') {
             throw new TypeError('No constructor settings specified');
@@ -40,6 +41,9 @@ class QueueWorker {
         }
     }
     async poll() {
+        if (this.running)
+            return;
+        this.running = true;
         let item = null;
         do {
             try {
@@ -52,6 +56,7 @@ class QueueWorker {
                 throw TypeError('Invalid redis Operation');
             }
         } while (item != null);
+        this.running = false;
     }
     async add(...datas) {
         return Promise.all(datas.map(async (value) => {

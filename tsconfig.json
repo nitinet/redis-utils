@@ -5,10 +5,8 @@
 		"moduleResolution": "node",
 		"sourceMap": true,
 		"allowSyntheticDefaultImports": true,
-		"noImplicitAny": false,
 		"removeComments": true,
 		"incremental": true,
-		"resolveJsonModule": true,
 		"strict": true,
 		"outDir": "./dist"
 	},

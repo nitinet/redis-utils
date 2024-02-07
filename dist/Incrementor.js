@@ -1,23 +1,20 @@
-import * as redis from 'redis';
 class Incrementor {
-    redisOpts;
     client;
     count;
-    constructor(redisOpts, count) {
-        this.redisOpts = redisOpts;
-        this.client = redis.createClient(this.redisOpts);
+    constructor(client, count) {
+        this.client = client;
         this.count = count ?? 1000;
     }
     async loadPool(key) {
-        let sizeKey = key + '-size';
-        let data = await this.client.get(sizeKey);
+        let indexKey = key + '-index';
+        let data = await this.client.get(indexKey);
         let currIdx = 0;
         if (data)
             currIdx = Number.parseInt(data);
         Array.from({ length: this.count }).forEach(async (v, i) => {
             await this.client.rPush(key, (currIdx + i).toString());
         });
-        await this.client.set(sizeKey, (currIdx + this.count).toString());
+        await this.client.set(indexKey, (currIdx + this.count).toString());
     }
     async getId(key) {
         let idStr = await this.client.lPop(key);

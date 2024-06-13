@@ -51,12 +51,15 @@ class ScheduledWorker {
             flag = false;
             try {
                 await this.redisClient.watch(this.queueId);
-                let datas = await this.redisClient.zRangeByScore(this.queueId, 0, now, { LIMIT: { count: 1, offset: 0 } });
+                let datas = await this.redisClient.zRangeByScore(this.queueId, 0, now, {
+                    LIMIT: { count: 1, offset: 0 },
+                });
                 if (datas.length > 0) {
                     let data = datas.shift();
                     if (!data)
                         break;
-                    let results = await this.redisClient.multi()
+                    let results = await this.redisClient
+                        .multi()
                         .zRem(this.queueId, data)
                         .exec();
                     if (results?.length && results[0] == 1) {

@@ -11,9 +11,9 @@ class Incrementor {
         let currIdx = 0;
         if (data)
             currIdx = Number.parseInt(data);
-        Array.from({ length: this.count }).forEach(async (v, i) => {
+        await Promise.all(Array.from({ length: this.count }).map(async (v, i) => {
             await this.client.rPush(key, (currIdx + i).toString());
-        });
+        }));
         await this.client.set(indexKey, (currIdx + this.count).toString());
     }
     async getId(key) {

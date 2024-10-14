@@ -2,8 +2,6 @@
 logs
 *.log
 
-dist
-
 # Dependency directories
 node_modules/
 tsconfig.tsbuildinfo

@@ -2,6 +2,8 @@
 logs
 *.log
 
+dist
+
 # Dependency directories
 node_modules/
 tsconfig.tsbuildinfo
@@ -10,5 +12,3 @@ tsconfig.tsbuildinfo
 .npm
 package-lock.json
 pnpm-lock.yaml
-
-.DS_Store

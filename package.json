@@ -1,5 +1,5 @@
 {
-  "name": "redis-utils",
+  "name": "@nitinet/redis-utils",
   "version": "1.0.0",
   "description": "",
   "type": "module",
@@ -8,10 +8,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nitinet/redis-utils.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@nitinet"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/node": "^20.14.2",
-    "redis": "^4.6.14"
+    "@types/node": "^22.7.5",
+    "redis": "^4.7.0"
   }
 }
